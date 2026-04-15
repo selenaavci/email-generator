@@ -261,8 +261,12 @@ def kopyala_butonu(metin: str) -> None:
         <head>
           <style>
             html, body {{ margin:0; padding:0; background:transparent !important;
+              color: #d0d0d0;
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI',
                            'Source Sans Pro', sans-serif; }}
+            @media (prefers-color-scheme: light) {{
+              html, body {{ color: #222; }}
+            }}
             #wrap {{ display:flex; justify-content:flex-end; }}
             #kopyala-btn {{
               padding:6px 14px; border-radius:8px; cursor:pointer;
