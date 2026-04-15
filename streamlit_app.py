@@ -6,11 +6,11 @@ st.set_page_config(page_title="MailCraft Agent", layout="centered")
 
 
 def get_client():
-    api_key = st.secrets.get("OPENAI_API_KEY", "")
-    base_url = st.secrets.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
+    api_key = st.secrets.get("LLM_API_KEY", "")
+    base_url = st.secrets.get("LLM_BASE_URL", "")
     if not api_key:
         st.error(
-            "OPENAI_API_KEY bulunamadı. Streamlit Cloud ayarlarından "
+            "LLM_API_KEY bulunamadı. Streamlit Cloud ayarlarından "
             "**Settings → Secrets** bölümüne ekleyin."
         )
         st.stop()
@@ -18,7 +18,7 @@ def get_client():
 
 
 def get_model():
-    return st.secrets.get("OPENAI_MODEL", "gpt-4o-mini")
+    return st.secrets.get("LLM_MODEL", "")
 
 
 DILLER = ["Türkçe", "İngilizce"]
