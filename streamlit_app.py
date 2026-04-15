@@ -54,6 +54,8 @@ YENIDEN_URETIM_VARYANTLARI = [
     "Daha net",
 ]
 
+ALICI_HITAPLARI = ["Belirtilmedi", "Hanım", "Bey"]
+
 
 def sistem_promptu(cikti_dili: str) -> str:
     return (
@@ -63,7 +65,14 @@ def sistem_promptu(cikti_dili: str) -> str:
         "Çıktı yalnızca e-posta metni olmalıdır; açıklama, not veya markdown başlığı ekleme. "
         "İlk satır 'Konu: ...' şeklinde olmalı, sonrasında boş satır, ardından e-posta gövdesi gelmeli. "
         "Bilinmeyen bilgiler için uygun yer tutucu kullan (örn. [Adınız], [Alıcı Adı]). "
-        "Emoji kullanma, aşırı resmî veya aşırı gündelik olma; tonu kullanıcı seçimine göre ayarla."
+        "Emoji kullanma, aşırı resmî veya aşırı gündelik olma; tonu kullanıcı seçimine göre ayarla. "
+        "Türkçe çıktılarda hitap kuralı: alıcının cinsiyeti/hitabı belirtilmişse "
+        "'Merhaba [Ad] Hanım,' veya 'Merhaba [Ad] Bey,' biçiminde başla; samimi tonda "
+        "'Merhaba [Ad],' kullanılabilir. Cinsiyet/hitap belirtilmemişse 'Sayın [Ad]' gibi "
+        "cinsiyet belirten hitaplardan kaçın; bunun yerine 'Merhaba [Ad],' veya 'Sayın "
+        "[Alıcı Adı]' (soyad biliniyorsa) ya da 'Merhaba,' kullan. Asla sadece isme "
+        "'Sayın [Ad]' şeklinde hitap etme. İngilizce çıktılarda standart 'Dear [Ad]' / "
+        "'Hello [Ad]' kullan."
     )
 
 
@@ -74,6 +83,7 @@ def kullanici_promptu(
     yanitlanacak: str,
     gonderen: str,
     alici: str,
+    alici_hitap: str,
     ton: str,
     uzunluk: str,
     kategori: str,
@@ -90,6 +100,17 @@ def kullanici_promptu(
         parcalar.append(f"Kategori: {kategori}")
     parcalar.append(f"Gönderen adı: {gonderen.strip() or '[Adınız]'}")
     parcalar.append(f"Alıcı adı: {alici.strip() or '[Alıcı Adı]'}")
+    if alici_hitap and alici_hitap != "Belirtilmedi":
+        parcalar.append(
+            f"Alıcı hitabı: {alici_hitap}. Türkçe çıktıda 'Merhaba [Ad] {alici_hitap},' "
+            f"biçiminde hitap et; 'Sayın [Ad]' kullanma."
+        )
+    else:
+        parcalar.append(
+            "Alıcı hitabı belirtilmedi. Cinsiyet belirten hitap ('Sayın [Ad]', "
+            "'[Ad] Hanım/Bey') KULLANMA; bunun yerine 'Merhaba [Ad],' veya nötr bir "
+            "hitap tercih et."
+        )
     parcalar.append(
         "Konu başlığı önerisi: "
         + ("Evet, yaratıcı ve konuya uygun bir konu başlığı öner."
@@ -169,6 +190,15 @@ with col1:
 with col2:
     alici = st.text_input("Alıcı Adı (Opsiyonel)")
 
+alici_hitap = st.radio(
+    "Alıcı Hitabı (Opsiyonel)",
+    ALICI_HITAPLARI,
+    index=0,
+    horizontal=True,
+    help="Türkçe çıktıda 'Merhaba [Ad] Hanım/Bey' biçiminde hitap edilir. "
+         "Belirtilmezse cinsiyet belirten hitap kullanılmaz.",
+)
+
 olustur = st.button("Maili Oluştur", type="primary", use_container_width=True)
 
 
@@ -191,6 +221,7 @@ if olustur:
             yanitlanacak=yanitlanacak,
             gonderen=gonderen,
             alici=alici,
+            alici_hitap=alici_hitap,
             ton=ton,
             uzunluk=uzunluk,
             kategori=kategori,
