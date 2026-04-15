@@ -1,4 +1,3 @@
-import html
 import json
 
 import streamlit as st
@@ -242,37 +241,47 @@ if olustur:
 
 def kopyala_butonu(metin: str) -> None:
     js_metin = json.dumps(metin)
-    html_icerik = html.escape(metin).replace("\n", "<br>")
     components.html(
         f"""
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
-          <div style="display:flex; justify-content:flex-end; margin-bottom:8px;">
-            <button id="kopyala-btn"
-              style="padding:8px 16px; border-radius:6px; border:1px solid #d0d0d0;
-                     background:#ffffff; cursor:pointer; font-size:14px; font-weight:500;">
-              Kopyala
-            </button>
-          </div>
-          <div style="padding:16px; border:1px solid #e0e0e0; border-radius:8px;
-                      background:#fafafa; white-space:pre-wrap; line-height:1.5;
-                      font-size:14px; color:#222;">{html_icerik}</div>
-        </div>
-        <script>
-          const btn = document.getElementById("kopyala-btn");
-          btn.addEventListener("click", async () => {{
-            try {{
-              await navigator.clipboard.writeText({js_metin});
-              const eski = btn.innerText;
-              btn.innerText = "Kopyalandı";
-              btn.style.background = "#e6f4ea";
-              setTimeout(() => {{ btn.innerText = eski; btn.style.background = "#ffffff"; }}, 1500);
-            }} catch (e) {{
-              btn.innerText = "Kopyalanamadı";
+        <!doctype html>
+        <html>
+        <head>
+          <style>
+            :root {{ color-scheme: light dark; }}
+            html, body {{ margin:0; padding:0; background:transparent;
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI',
+                           'Source Sans Pro', sans-serif; }}
+            #wrap {{ display:flex; justify-content:flex-end; }}
+            #kopyala-btn {{
+              padding:6px 14px; border-radius:8px; cursor:pointer;
+              font-size:14px; font-weight:500;
+              border:1px solid rgba(128,128,128,0.35);
+              background:rgba(128,128,128,0.12);
+              color:inherit;
+              transition: background 0.15s ease;
             }}
-          }});
-        </script>
+            #kopyala-btn:hover {{ background:rgba(128,128,128,0.22); }}
+          </style>
+        </head>
+        <body>
+          <div id="wrap"><button id="kopyala-btn">Kopyala</button></div>
+          <script>
+            const btn = document.getElementById("kopyala-btn");
+            btn.addEventListener("click", async () => {{
+              try {{
+                await navigator.clipboard.writeText({js_metin});
+                const eski = btn.innerText;
+                btn.innerText = "Kopyalandı ✓";
+                setTimeout(() => {{ btn.innerText = eski; }}, 1500);
+              }} catch (e) {{
+                btn.innerText = "Kopyalanamadı";
+              }}
+            }});
+          </script>
+        </body>
+        </html>
         """,
-        height=max(220, 60 + metin.count("\n") * 22),
+        height=44,
     )
 
 
@@ -280,6 +289,7 @@ if st.session_state.son_cikti:
     st.divider()
     st.subheader("Üretilen E-posta")
     kopyala_butonu(st.session_state.son_cikti)
+    st.markdown(st.session_state.son_cikti.replace("\n", "  \n"))
 
     st.divider()
     st.subheader("Yeniden Üret")
