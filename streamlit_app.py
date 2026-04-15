@@ -256,11 +256,11 @@ def kopyala_butonu(metin: str) -> None:
               padding:6px 14px; border-radius:8px; cursor:pointer;
               font-size:14px; font-weight:500;
               border:1px solid rgba(128,128,128,0.35);
-              background:rgba(128,128,128,0.12);
+              background:transparent;
               color:inherit;
               transition: background 0.15s ease;
             }}
-            #kopyala-btn:hover {{ background:rgba(128,128,128,0.22); }}
+            #kopyala-btn:hover {{ background:rgba(128,128,128,0.15); }}
           </style>
         </head>
         <body>
