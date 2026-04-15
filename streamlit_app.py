@@ -195,8 +195,6 @@ alici_hitap = st.radio(
     ALICI_HITAPLARI,
     index=0,
     horizontal=True,
-    help="Türkçe çıktıda 'Merhaba [Ad] Hanım/Bey' biçiminde hitap edilir. "
-         "Belirtilmezse cinsiyet belirten hitap kullanılmaz.",
 )
 
 olustur = st.button("Maili Oluştur", type="primary", use_container_width=True)
