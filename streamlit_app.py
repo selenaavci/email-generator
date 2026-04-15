@@ -7,6 +7,19 @@ from openai import OpenAI
 
 st.set_page_config(page_title="MailCraft Agent", layout="centered")
 
+st.markdown(
+    """
+    <style>
+      div[data-testid="stIFrame"] iframe,
+      div.element-container iframe {
+        background: transparent !important;
+        color-scheme: normal;
+      }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 
 def get_client():
     api_key = st.secrets.get("LLM_API_KEY", "")
@@ -247,8 +260,7 @@ def kopyala_butonu(metin: str) -> None:
         <html>
         <head>
           <style>
-            :root {{ color-scheme: light dark; }}
-            html, body {{ margin:0; padding:0; background:transparent;
+            html, body {{ margin:0; padding:0; background:transparent !important;
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI',
                            'Source Sans Pro', sans-serif; }}
             #wrap {{ display:flex; justify-content:flex-end; }}
@@ -281,7 +293,7 @@ def kopyala_butonu(metin: str) -> None:
         </body>
         </html>
         """,
-        height=44,
+        height=40,
     )
 
 
