@@ -208,9 +208,8 @@ if olustur:
 if st.session_state.son_cikti:
     st.divider()
     st.subheader("Üretilen E-posta")
-    st.text_area("Çıktı", value=st.session_state.son_cikti, height=360, key="cikti_alani")
     st.code(st.session_state.son_cikti, language="markdown")
-    st.caption("Yukarıdaki blokta sağ üstteki simgeye basarak kopyalayabilirsiniz.")
+    st.caption("Sağ üstteki simgeye basarak çıktıyı kopyalayabilirsiniz.")
 
     st.divider()
     st.subheader("Yeniden Üret")
