@@ -1,4 +1,8 @@
+import html
+import json
+
 import streamlit as st
+import streamlit.components.v1 as components
 from openai import OpenAI
 
 
@@ -195,6 +199,8 @@ alici_hitap = st.radio(
     ALICI_HITAPLARI,
     index=0,
     horizontal=True,
+    help="Türkçe çıktıda 'Merhaba [Ad] Hanım/Bey' biçiminde hitap edilir. "
+         "Belirtilmezse cinsiyet belirten hitap kullanılmaz.",
 )
 
 olustur = st.button("Maili Oluştur", type="primary", use_container_width=True)
@@ -234,11 +240,46 @@ if olustur:
                 st.error(f"Üretim sırasında bir hata oluştu: {e}")
 
 
+def kopyala_butonu(metin: str) -> None:
+    js_metin = json.dumps(metin)
+    html_icerik = html.escape(metin).replace("\n", "<br>")
+    components.html(
+        f"""
+        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+          <div style="display:flex; justify-content:flex-end; margin-bottom:8px;">
+            <button id="kopyala-btn"
+              style="padding:8px 16px; border-radius:6px; border:1px solid #d0d0d0;
+                     background:#ffffff; cursor:pointer; font-size:14px; font-weight:500;">
+              Kopyala
+            </button>
+          </div>
+          <div style="padding:16px; border:1px solid #e0e0e0; border-radius:8px;
+                      background:#fafafa; white-space:pre-wrap; line-height:1.5;
+                      font-size:14px; color:#222;">{html_icerik}</div>
+        </div>
+        <script>
+          const btn = document.getElementById("kopyala-btn");
+          btn.addEventListener("click", async () => {{
+            try {{
+              await navigator.clipboard.writeText({js_metin});
+              const eski = btn.innerText;
+              btn.innerText = "Kopyalandı";
+              btn.style.background = "#e6f4ea";
+              setTimeout(() => {{ btn.innerText = eski; btn.style.background = "#ffffff"; }}, 1500);
+            }} catch (e) {{
+              btn.innerText = "Kopyalanamadı";
+            }}
+          }});
+        </script>
+        """,
+        height=max(220, 60 + metin.count("\n") * 22),
+    )
+
+
 if st.session_state.son_cikti:
     st.divider()
     st.subheader("Üretilen E-posta")
-    st.code(st.session_state.son_cikti, language="markdown")
-    st.caption("Sağ üstteki simgeye basarak çıktıyı kopyalayabilirsiniz.")
+    kopyala_butonu(st.session_state.son_cikti)
 
     st.divider()
     st.subheader("Yeniden Üret")
