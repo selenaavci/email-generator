@@ -1,24 +1,14 @@
-import json
-
 import streamlit as st
-import streamlit.components.v1 as components
 from openai import OpenAI
 
 
-st.set_page_config(page_title="MailCraft Agent", layout="centered")
+def safe_rerun() -> None:
+    rerun_fn = getattr(st, "rerun", None) or getattr(st, "experimental_rerun", None)
+    if rerun_fn is not None:
+        rerun_fn()
 
-st.markdown(
-    """
-    <style>
-      div[data-testid="stIFrame"] iframe,
-      div.element-container iframe {
-        background: transparent !important;
-        color-scheme: normal;
-      }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+
+st.set_page_config(page_title="MailCraft Agent", layout="centered")
 
 
 def get_client():
@@ -26,15 +16,23 @@ def get_client():
     base_url = st.secrets.get("LLM_BASE_URL", "")
     if not api_key:
         st.error(
-            "LLM_API_KEY bulunamadı. Streamlit Cloud ayarlarından "
-            "**Settings → Secrets** bölümüne ekleyin."
+            "LLM bilgileri eksik. Yerelde `.streamlit/secrets.toml` dosyasına "
+            "ya da Streamlit Cloud → **Settings → Secrets** bölümüne "
+            "`LLM_API_KEY`, `LLM_BASE_URL` ve `LLM_MODEL` ekleyin."
         )
         st.stop()
-    return OpenAI(api_key=api_key, base_url=base_url)
+    return OpenAI(api_key=api_key, base_url=base_url or None)
 
 
 def get_model():
-    return st.secrets.get("LLM_MODEL", "")
+    model = st.secrets.get("LLM_MODEL", "")
+    if not model:
+        st.error(
+            "LLM bilgileri eksik. `.streamlit/secrets.toml` ya da Streamlit "
+            "Cloud Secrets bölümüne `LLM_MODEL` alanını ekleyin."
+        )
+        st.stop()
+    return model
 
 
 DILLER = ["Türkçe", "İngilizce"]
@@ -252,60 +250,10 @@ if olustur:
                 st.error(f"Üretim sırasında bir hata oluştu: {e}")
 
 
-def kopyala_butonu(metin: str) -> None:
-    js_metin = json.dumps(metin)
-    components.html(
-        f"""
-        <!doctype html>
-        <html>
-        <head>
-          <style>
-            html, body {{ margin:0; padding:0; background:transparent !important;
-              color: #d0d0d0;
-              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI',
-                           'Source Sans Pro', sans-serif; }}
-            @media (prefers-color-scheme: light) {{
-              html, body {{ color: #222; }}
-            }}
-            #wrap {{ display:flex; justify-content:flex-end; }}
-            #kopyala-btn {{
-              padding:6px 14px; border-radius:8px; cursor:pointer;
-              font-size:14px; font-weight:500;
-              border:1px solid rgba(128,128,128,0.35);
-              background:transparent;
-              color:inherit;
-              transition: background 0.15s ease;
-            }}
-            #kopyala-btn:hover {{ background:rgba(128,128,128,0.15); }}
-          </style>
-        </head>
-        <body>
-          <div id="wrap"><button id="kopyala-btn">Kopyala</button></div>
-          <script>
-            const btn = document.getElementById("kopyala-btn");
-            btn.addEventListener("click", async () => {{
-              try {{
-                await navigator.clipboard.writeText({js_metin});
-                const eski = btn.innerText;
-                btn.innerText = "Kopyalandı ✓";
-                setTimeout(() => {{ btn.innerText = eski; }}, 1500);
-              }} catch (e) {{
-                btn.innerText = "Kopyalanamadı";
-              }}
-            }});
-          </script>
-        </body>
-        </html>
-        """,
-        height=40,
-    )
-
-
 if st.session_state.son_cikti:
     st.divider()
     st.subheader("Üretilen E-posta")
-    kopyala_butonu(st.session_state.son_cikti)
-    st.markdown(st.session_state.son_cikti.replace("\n", "  \n"))
+    st.code(st.session_state.son_cikti, language=None)
 
     st.divider()
     st.subheader("Yeniden Üret")
@@ -316,6 +264,6 @@ if st.session_state.son_cikti:
                 st.session_state.son_cikti = mail_uret(
                     st.session_state.son_payload, varyant=varyant
                 )
-                st.rerun()
+                safe_rerun()
             except Exception as e:
                 st.error(f"Üretim sırasında bir hata oluştu: {e}")

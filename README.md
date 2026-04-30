@@ -1,204 +1,186 @@
-# MailCraft Agent
+# 📧 MailCraft Agent
 
-## Projenin Amacı
+## Project Overview
+MailCraft Agent, kullanıcıların **yeni e-posta oluşturmasını veya mevcut bir maile yanıt vermesini** kısa bir doğal dil açıklamasıyla otomatikleştiren, LLM destekli bir e-posta üretim modülüdür.
 
-MailCraft Agent, kullanıcıların yeni bir e-posta oluşturmasını veya mevcut bir e-postaya hızlı ve doğru şekilde yanıt vermesini kolaylaştırmak için tasarlanmış, LLM destekli bir e-posta üretim aracıdır. Projenin temel amacı, teknik olmayan kullanıcıların da rahatlıkla kullanabileceği sade bir arayüz üzerinden, yalnızca metin girdisi vererek profesyonel e-postalar oluşturabilmesini sağlamaktır.
+Teknik olmayan kullanıcılar bile **birkaç metin alanı doldurarak** profesyonel, ton-uyumlu, dile uygun ve formatlı e-posta taslağı üretebilir. Sistem; ton, uzunluk, kategori, dil, alıcı hitabı ve kurumsal imza gibi parametreleri prompt'a katarak LLM'e zenginleştirilmiş bağlam sunar ve tek tıkla "yeniden üret" varyantları (daha kısa / daha resmî / daha nazik / daha net) sağlar.
 
-Bu ürün özellikle zaman kazandırmak, yazım kalitesini artırmak, dil bariyerini azaltmak ve kullanıcıların farklı senaryolarda daha rahat iletişim kurabilmesini desteklemek için tasarlanmıştır. Kullanıcı ister yeni bir e-posta yazmak istesin, ister kendisine gelen bir e-postaya yanıt hazırlamak istesin, sistem girilen bağlam ve istenen dile göre uygun bir e-posta taslağı üretir.
-
----
-
-## Ürün Kapsamı
-
-MailCraft Agent iki ana kullanım senaryosu sunar:
-
-1. **Yeni Mail Oluşturma**  
-   Kullanıcı yalnızca ne demek istediğini metin olarak yazar. Sistem bu isteği uygun e-posta formatında üretir.
-
-2. **Mail Yanıtı Oluşturma**  
-   Kullanıcı, yanıtlamak istediği e-postanın içeriğini metin olarak yapıştırır ve ayrıca vermek istediği cevabı kısa bir açıklama halinde belirtir. Sistem, bu bağlama uygun bir yanıt e-postası üretir.
-
-Bu yapı sayesinde kullanıcı dosya yüklemek zorunda kalmadan, yalnızca metin ile çalışabilir. Özellikle güvenlik, sadelik ve kullanım kolaylığı açısından bu yaklaşım bilinçli olarak tercih edilmiştir.
+> ⚠️ **LLM gerektirir.** Bu agent kurum içi (vLLM, on-prem) veya OpenAI uyumlu bir LLM endpoint'i ile çalışır. **Cloud versiyonu** (`streamlit_app.py`) `st.secrets` üzerinden, **Windows versiyonu** (`mailcraft.py` / `email-generator/email_generator.py`) ise dosya başındaki sabitlerden credential okur. LLM yapılandırılmadan başlatıldığında uygulama erken durur ve kullanıcıyı bilgilendirir.
 
 ---
 
-## Temel Özellikler
+## 🎯 Project Purpose
+Yazma süresini kısaltmak, dil/biçim hatalarını azaltmak ve farklı senaryolarda **tutarlı kurumsal ses tonu** sağlamak. Özellikle çok dilli iletişim (Türkçe / İngilizce) gereken durumlarda dil bariyerini düşürür ve yeni mail / mail yanıtı için tek bir arayüzde standardizasyon sunar.
 
-- Türkçe arayüz
-- Yeni mail oluşturma desteği
-- Gelen maile yanıt oluşturma desteği
-- Dil seçeneği üzerinden çıktı dilini belirleme
-- Kullanıcı prompt’una göre bağlama uygun e-posta üretimi
-- İsteğe bağlı isim alanları
-- Kopyalanabilir çıktı
-- Aynı içerik için yeniden üretim (regenerate) desteği
-- Teknik olmayan kullanıcılar için sade ve anlaşılır kullanım akışı
+Sadece "metin üreten" basit bir LLM wrapper'ı olmaktan farkı: **prompt mühendisliği** üzerinden hitap, yer tutucu, format, emoji yasağı, dil zorlaması ve ton kalibrasyonu doğrudan sistem prompt'unda enforce edilir.
 
 ---
 
-## Arayüz Tasarımı
+## 👥 Target Use Cases
 
-Uygulama **Streamlit** ile geliştirilecektir ve arayüz tamamen Türkçe olacaktır. Kullanıcı deneyiminin olabildiğince yalın, hızlı ve sezgisel olması hedeflenmektedir.
+### 1. Kurumsal İletişim
+- Toplantı talebi / erteleme / iptali
+- Teklif / fiyat / bilgi talebi yanıtları
+- Resmî bilgilendirme veya teşekkür mesajları
 
-### Ana Form Bileşenleri
+### 2. Müşteri / Operasyon Yanıtları
+- Şikâyet ve geri bildirim yanıtları
+- Takip ve hatırlatma e-postaları
+- İzin / başvuru / iş ilişkili formlar
 
-#### 1. Mail Türü
-Kullanıcı ilk olarak aşağıdaki iki seçenekten birini seçer:
-
-- **Yeni Mail**
-- **Mail Yanıtı**
-
-Bu seçim, ekranda açılacak form alanlarını dinamik olarak belirler.
-
-#### 2. Dil Seçeneği
-Kullanıcı, üretilecek e-postanın dilini seçer.
-
-Önemli tasarım kararı:
-- Arayüz tamamen Türkçe kalır.
-- Kullanıcı İngilizce seçse bile yalnızca **üretilen e-posta çıktısı** İngilizce olur.
-- Yani sistem dili değil, yalnızca çıktı dili değişir.
-
-Örnek seçenekler:
-- Türkçe
-- İngilizce
-
-#### 3. Kullanıcı Talebi
-Her iki modda da kullanıcıdan, e-postada ne demek istediğini açıklayan bir metin alınır.
-
-Örnek:
-- “Toplantıyı gelecek haftaya ertelemek istediğimi nazikçe söyle.”
-- “Teklif için teşekkür edip birkaç gün içinde geri döneceğimi belirt.”
-
-#### 4. Yanıtlanacak Mail Alanı
-Yalnızca **Mail Yanıtı** seçildiğinde görünür.
-
-Bu alanda kullanıcı, yanıtlamak istediği e-postanın gövdesini düz metin olarak yapıştırır.
-
-#### 5. İsteğe Bağlı Bilgiler
-Kullanıcı isterse aşağıdaki alanları doldurabilir:
-- **Adınız**
-- **Gönderilecek Kişinin Adı**
-
-Bu alanlar boş bırakılırsa sistem çıktı içerisinde gerekiyorsa yer tutucu ifadeler kullanabilir:
-- `[Adınız]`
-- `[Alıcı Adı]`
+### 3. Multilingual Communication
+- Türkçe ↔ İngilizce çıktı seçeneği
+- Cinsiyet-belirtmeyen Türkçe hitap kuralları (Sayın [Ad] yerine Merhaba [Ad])
+- Kurum içi standart imza şablonu desteği
 
 ---
 
-## Önerilen Kullanım Akışı
+## ⚙️ End-to-End Workflow
 
-### Senaryo 1: Yeni Mail
-1. Kullanıcı “Yeni Mail” seçer.
-2. Üretilecek mailin dilini seçer.
-3. Ne demek istediğini prompt alanına yazar.
-4. İsterse kendi adını ve alıcı adını girer.
-5. “Maili Oluştur” butonuna basar.
-6. Sistem, uygun formatta e-postayı üretir.
-
-### Senaryo 2: Mail Yanıtı
-1. Kullanıcı “Mail Yanıtı” seçer.
-2. Üretilecek mailin dilini seçer.
-3. Yanıtlamak istediği maili metin alanına yapıştırır.
-4. Vermek istediği cevabı prompt alanına yazar.
-5. İsterse isim alanlarını doldurur.
-6. “Maili Oluştur” butonuna basar.
-7. Sistem, mevcut bağlama uygun bir yanıt e-postası üretir.
-
----
-
-## Üretim Mantığı
-
-Sistem, kullanıcıdan alınan yapılandırılmış girdileri bir LLM’e ileterek çıktı üretir. Üretim sırasında şu bilgiler modele gönderilir:
-
-- Mail türü
-- Çıktı dili
-- Kullanıcının açıklaması / isteği
-- Yanıtlanacak mail içeriği (varsa)
-- Gönderen adı (varsa)
-- Alıcı adı (varsa)
-
-Bu sayede model yalnızca genel bir metin üretmez; seçilen senaryoya ve verilen bağlama göre daha isabetli, daha kullanışlı bir e-posta metni oluşturur.
+1. **Mod Seçimi** — Kullanıcı **Yeni Mail** veya **Mail Yanıtı** modunu seçer.
+2. **Dil Seçimi** — Çıktı dili: Türkçe veya İngilizce.
+3. **Ayarlar (sidebar)**
+   - Ton (Resmî / Samimi / Net / İkna edici / Nazik)
+   - Mail uzunluğu (Kısa / Orta / Uzun)
+   - Kategori (Teşekkür / Toplantı / Bilgilendirme / Özür / Teklif vb.)
+   - Yaratıcı konu başlığı önerisi (toggle)
+   - Kurumsal imza şablonu (opsiyonel text area)
+4. **Hazır Şablon (opsiyonel)** — Toplantı erteleme, teklif teşekkürü, izin talebi, hatırlatma gibi yaygın senaryolar için pre-fill metni.
+5. **Talep Girişi** — Kullanıcı "ne demek istediğini" 1–3 cümleyle açıklar. Mail yanıtı modunda ek olarak yanıtlanacak orijinal mailin gövdesi yapıştırılır.
+6. **Alıcı Bilgileri (opsiyonel)** — Gönderen / alıcı adı + alıcı hitabı (Belirtilmedi / Hanım / Bey).
+7. **Prompt İnşası** — `kullanici_promptu()` parametreleri yapılandırılmış bir bağlama dönüştürür; sistem prompt'u ton, dil, hitap kuralları ve format dahil ihtiyaç duyulan davranışı LLM'e dikte eder.
+8. **LLM Çağrısı** — OpenAI uyumlu chat completions endpoint'ine `temperature=0.7` ile gönderim. Yanıt: tek bir e-posta metni (Konu satırı + boş satır + gövde).
+9. **Çıktı Görüntüleme** — `st.code(...)` widget'ında metin formatlı (kopyalama ikonu Streamlit'in native UI'sından).
+10. **Yeniden Üretim** — Aynı bağlamla ya da varyantlarla (daha kısa / daha resmî / daha nazik / daha net) yeniden üretim.
 
 ---
 
-## Neden Dosya Yükleme Yok?
+## 🧩 Architecture Overview
 
-Bu ürünün ilk versiyonunda kullanıcıların dosya yükleyememesi bilinçli bir tasarım tercihidir.
+**Core Layers:**
 
-Bunun başlıca nedenleri:
-- Kullanım akışını sade tutmak
-- Teknik karmaşıklığı azaltmak
-- Güvenlik ve veri kontrolünü kolaylaştırmak
-- Kullanıcıyı yalnızca gerekli metin girdisine odaklamak
+- **Configuration Layer**
+  Cloud (`streamlit_app.py`): `st.secrets` üzerinden `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL` okur.
+  Windows (`mailcraft.py` / `email-generator/email_generator.py`): dosya başındaki sabitlerden okur (`LLM_API_KEY = " "` formatında).
 
-Bu nedenle sistem yalnızca **düz metin yapıştırma** mantığı ile çalışır.
+- **Prompt Engineering Layer**
+  - `sistem_promptu(cikti_dili)` — Türkçe hitap kuralları, dil zorlaması, format şablonu, emoji yasağı
+  - `kullanici_promptu(...)` — Kullanıcı parametrelerini yapılandırılmış paragraflara dönüştürür
 
----
+- **LLM Client Layer**
+  OpenAI Python SDK (`openai>=1.40`) — `base_url` özelleştirilebilir (vLLM, Azure OpenAI, on-prem endpoint). Yapılandırma eksikse `st.error` + `st.stop` ile erken sonlanır.
 
-## Hedef Kullanıcı Kitlesi
+- **UI Layer (Streamlit)**
+  Tek sayfa, sidebar'da ayarlar, ana alanda mod / dil / talep / yanıt-girişi / kişi bilgisi / üret butonu. Sonuç `st.code` ile gösterilir (Windows-RDP uyumlu, custom JavaScript yok).
 
-MailCraft Agent özellikle aşağıdaki kullanıcı grupları için uygundur:
-
-- Teknik olmayan kurumsal kullanıcılar
-- Hızlı e-posta desteğine ihtiyaç duyan ekipler
-- İngilizce e-posta yazmakta zorlanan kullanıcılar
-- Resmî veya yarı resmî mail dilinde desteğe ihtiyaç duyan çalışanlar
-- Gelen maili hızlıca cevaplamak isteyen operasyon ekipleri
+- **Generation State Layer**
+  `st.session_state.son_payload` — son istek; `st.session_state.son_cikti` — son üretilen mail. Yeniden üretim varyantları için aynı payload kullanılıp sadece varyant talimatı eklenir.
 
 ---
 
-## Teknik Yaklaşım
+## 🤖 Model & Technology Stack
 
-- **Arayüz:** Streamlit
-- **Girdi tipi:** Düz metin
-- **Çıktı tipi:** Kopyalanabilir e-posta metni
-- **Model:** LLM tabanlı metin üretimi
-- **Dil desteği:** Türkçe ve İngilizce çıktı
-- **Arayüz dili:** Tamamen Türkçe
+### LLM Integration
+- OpenAI uyumlu chat completions API
+- vLLM, Azure OpenAI, on-prem LLM (`base_url` özelleştirilebilir)
+- `temperature=0.7` (yaratıcı ama kontrollü)
+- Sistem prompt'u: ton/dil/hitap/format enforce
 
----
+### Backend & UI
+- Python
+- Streamlit (UI, native `st.code` ile kopyalama — custom JS yok)
+- openai (Python SDK ≥1.40)
 
-## Örnek Arayüz Alanları
-
-- Mail Türü
-- Dil Seçimi
-- Yanıtlanacak Mail
-- Ne Demek İstiyorsunuz?
-- Adınız (Opsiyonel)
-- Alıcı Adı (Opsiyonel)
-- Maili Oluştur
-- Yeniden Oluştur
-- Kopyala
+### Platform Variants
+- **Cloud** (`mailcraft-agent/streamlit_app.py`): `st.secrets`, Streamlit Cloud / Streamlit ≥1.32 ortam
+- **Windows** (`mailcraft-agent/mailcraft.py` ve `email-generator/email_generator.py`): hardcoded LLM sabitleri, internete kapalı RDP ortamı, Streamlit `==1.26.0` pin
 
 ---
 
-## Beklenen Fayda
+## 🧠 Prompt Engineering Strategy
 
-Bu ürünün sağlayacağı temel faydalar şunlardır:
+LLM doğrudan ham metin üretmiyor; **prompt katmanında çok sayıda kural enforce edilir**:
 
-- E-posta hazırlama süresini kısaltmak
-- Yazım kalitesini artırmak
-- Kullanıcıların daha profesyonel iletişim kurmasını desteklemek
-- Özellikle İngilizce mail hazırlarken bariyeri azaltmak
-- Günlük operasyonel işlerde hız ve tutarlılık sağlamak
+- **Dil zorlaması** — Sistem prompt'u "Üretilen e-posta yalnızca **{dil}** dilinde olmalıdır" ile çıktı dilini sıkı tutar
+- **Format zorlaması** — İlk satır `Konu: ...`, ardından boş satır, sonra gövde
+- **Türkçe hitap kuralı** — Cinsiyet bilinmediğinde "Sayın [Ad]" yasak; "Merhaba [Ad]" tercih edilir; bilinen cinsiyette "Merhaba [Ad] Hanım/Bey,"
+- **Yer tutucu kullanımı** — Bilinmeyen alanlarda `[Adınız]`, `[Alıcı Adı]` gibi placeholder'lar
+- **Emoji yasağı** — Sistem prompt'unda açıkça yasaklanır
+- **Ton kalibrasyonu** — Ton ile ne aşırı resmî ne de aşırı gündelik; kullanıcının seçtiği parametreye göre ayarlanır
+- **Yeniden üretim varyantları** — Aynı bağlamla "daha kısa / daha resmî / daha nazik / daha net" tek tık iyileştirme
 
----
-
-## Gelecekte Eklenebilecek Geliştirmeler
-
-İlk versiyon dışında ilerleyen aşamalarda şu geliştirmeler değerlendirilebilir:
-
-- Ton seçimi (resmî, samimi, net, ikna edici vb.)
-- Mail uzunluğu seçimi
-- Daha kısa / daha resmî / daha nazik yeniden üretim seçenekleri
-- Konu başlığı önerisi üretme
-- Çok dilli destek
-- Kurumsal imza şablonu ekleme
-- Sık kullanılan mail şablonları
-- Kategori bazlı mail üretimi (teşekkür, toplantı talebi, erteleme, bilgilendirme vb.)
+LLM'e ham veri değil, **yapılandırılmış parametreler** (mod, dil, ton, uzunluk, kategori, hitap, imza, varyant) verilir; bu sayede kontrol ve açıklanabilirlik artar.
 
 ---
 
-## Sonuç
+## 📊 Example Output
 
-MailCraft Agent, kullanıcıların yalnızca kısa metin açıklamalarıyla etkili e-postalar oluşturmasını sağlayan sade ama yüksek fayda üreten bir araçtır. Türkçe arayüzü, metin bazlı kullanım modeli ve yeni mail / yanıt mail ayrımı sayesinde hem anlaşılır hem de pratik bir deneyim sunar. Özellikle kurumsal ortamlarda hızlı, tutarlı ve profesyonel e-posta üretimi için güçlü bir yardımcı araç olarak konumlanmaktadır.
+### Sistem girdileri
+- Mod: Yeni Mail
+- Dil: Türkçe
+- Ton: Nazik
+- Uzunluk: Orta
+- Kategori: Toplantı erteleme
+- Alıcı: Ahmet, Hitap: Bey
+- Talep: "Yarınki toplantıyı önümüzdeki haftaya ertelemek istiyorum"
+
+### Üretilen çıktı (örnek)
+```
+Konu: Yarınki Toplantımızın Ertelenmesi Hakkında
+
+Merhaba Ahmet Bey,
+
+Yarın için planlanan toplantımızı, beklenmedik bir gelişme nedeniyle önümüzdeki
+haftaya ertelemek durumundayım. Anlayışınız için şimdiden teşekkür ederim.
+
+Sizin için uygun olan tarih ve saati paylaşırsanız, takvimi buna göre yeniden
+düzenleyebiliriz.
+
+İyi çalışmalar dilerim.
+[Adınız]
+```
+
+### Yeniden Üretim Varyantları
+| Varyant | Etki |
+|---------|------|
+| Aynı istekle yeniden üret | Yeni bir varyasyon (aynı parametre) |
+| Daha kısa | Cümle ve paragraf sayısı azaltılır |
+| Daha resmî | Resmî dil kalıpları, daha uzun hitap |
+| Daha nazik | Yumuşatıcı ifadeler, teşekkür dozu artırılır |
+| Daha net | Süslemesiz, doğrudan açıklama |
+
+---
+
+## 🔐 Banking & Compliance Considerations
+
+- **LLM trafik kontrolü** — Cloud'da `st.secrets` ile credential dosya dışında; Windows'ta dosya başında sabit (kurum içi RDP'de güvenli kabul edilen yer)
+- **Dış servis bağımlılığı opsiyonel** — `base_url` ile on-prem / vLLM / Azure OpenAI'a yönlendirilebilir; OpenAI API zorunluluğu yoktur
+- **Yer tutucu yaklaşımı** — Üretilen mail'de `[Adınız]`, `[Alıcı Adı]` placeholder'ları vardır; LLM gerçek müşteri verisi üretmez
+- **Custom JavaScript yok** — Windows RDP ortamında "you must run JavaScript" tarzı iframe güvenlik uyarıları yaşanmaz; tüm UI native Streamlit bileşenleriyle çalışır
+- **Kullanıcı verisi LLM'e gider** — Talep + yanıtlanacak mail içeriği prompt'a dahil edildiği için, LLM endpoint'inin loglama ve gizlilik politikası kurum standartlarına uygun olmalıdır
+- **Auditability** — Streamlit oturum log'ları üzerinden hangi parametrelerle ne üretildiği izlenebilir
+
+---
+
+## 🚀 Business Impact
+
+- E-posta yazım süresini **dakika seviyesinden saniyeye** indirir
+- Çok dilli iletişimde dil bariyerini düşürür
+- Standart kurumsal imza ve hitap kalıplarıyla **marka dili tutarlılığı** sağlar
+- Teknik olmayan kullanıcıların doğal dilden profesyonel mail üretmesini sağlar
+- Mail yanıtlarında okuyup-yorumlayıp-yanıtlama süresini kısaltır
+- Yeniden üretim varyantları sayesinde tek tık ile alternatif tonlar denenebilir
+- Windows RDP, Streamlit Cloud ve hibrit ortamlarda aynı kullanıcı deneyimini sunar
+
+---
+
+## 🔮 Future Enhancements
+
+- E-posta geçmişi: oturumlar arası tutulan üretim arşivi
+- Kullanıcıya özel imza profilleri ve şablon kütüphanesi
+- Çoklu LLM provider seçimi (OpenAI / Azure / vLLM / Anthropic) UI üzerinden seçilebilir
+- E-posta gönderim entegrasyonu (Outlook, Gmail API)
+- Konu önerisi A/B testi (3 alternatif başlık öneren mod)
+- Dil otomatik tespiti (yanıt modunda yanıtlanacak mail'in dilini otomatik kullan)
+- Marka tone-of-voice fine-tune (kurumsal stil rehberi LLM context'ine yedirilir)
+- Spell-check ve gramer doğrulama post-processing katmanı
